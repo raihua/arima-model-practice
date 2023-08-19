@@ -21,14 +21,13 @@ def generate_forecast(model_fit, start_date, end_date):
     return forecast
 
 
-def append_forecast_to_data(data, forecast, forecast_years):
-    forecast_data = pd.DataFrame({'Forecast': forecast}, index=forecast_years)
-    combined_data = pd.concat([data, forecast_data])
-    return combined_data
-
-
-def export_to_csv(data, file_path):
-    data.to_csv(file_path)
+def plot_forecast(data, forecast_years, forecast):
+    plt.plot(data.index, data.values, label='Historical Data')
+    plt.plot(forecast_years, forecast, color='red', label='Forecast')
+    plt.xlabel('Time')
+    plt.ylabel('EVSales')
+    plt.legend()
+    plt.show()
 
 
 def main():
@@ -41,8 +40,13 @@ def main():
     forecast = generate_forecast(model_fit, start_date, end_date)
     forecast_years = pd.date_range(start=start_date, end=end_date, freq='AS-JAN')
     
-    combined_data = append_forecast_to_data(data, forecast, forecast_years)
-    export_to_csv(combined_data, 'combined_ev_sales.csv')
+    # Extend the existing data with forecasted values
+    extended_data = pd.concat([data, pd.Series(forecast, index=forecast_years)])
+    
+    # Export the extended data to a CSV file
+    extended_data.to_csv('extended_ev_sales.csv')
+    
+    plot_forecast(data, forecast_years, forecast)
 
 
 if __name__ == "__main__":
