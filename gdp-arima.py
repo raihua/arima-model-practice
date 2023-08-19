@@ -1,33 +1,47 @@
 from pandas import read_csv
 import pandas as pd
-from matplotlib import pyplot
+from matplotlib import pyplot as plt
 from statsmodels.tsa.arima.model import ARIMA
-import warnings
 
 
-def parser(x):
-    year = int(x)
-    return pd.to_datetime(str(year))
-
-# Read the data with the appropriate date format
-series = read_csv('ev-sales.csv', header=0, parse_dates=[0], index_col=0, date_format='%Y')
+def load_data(file_path):
+    series = read_csv(file_path, header=0, parse_dates=[0], index_col=0, date_format='%Y')
+    return series
 
 
-# Suppress specific warnings
-warnings.simplefilter(action='ignore', category=UserWarning)
+def train_arima_model(data, order=(4, 1, 1)):
+    model = ARIMA(data, order=order)
+    model_fit = model.fit()
+    return model_fit
 
-# Train the ARIMA model using the entire dataset
-model = ARIMA(series, order=(4, 1, 1))
-model_fit = model.fit()
 
-# Forecast for the years 2023 to 2050
-forecast_years = pd.date_range(start='2023-01-01', end='2050-01-01', freq='AS-JAN')
-forecast = model_fit.forecast(steps=len(forecast_years))  # Generate the forecast
+def generate_forecast(model_fit, start_date, end_date):
+    forecast_years = pd.date_range(start=start_date, end=end_date, freq='AS-JAN')
+    forecast = model_fit.forecast(steps=len(forecast_years))
+    return forecast
 
-# Plot the forecast
-pyplot.plot(series.index, series.values, label='Historical Data')
-pyplot.plot(forecast_years, forecast, color='red', label='Forecast')
-pyplot.xlabel('Time')
-pyplot.ylabel('EVSales')
-pyplot.legend()
-pyplot.show()
+
+def plot_forecast(data, forecast_years, forecast):
+    plt.plot(data.index, data.values, label='Historical Data')
+    plt.plot(forecast_years, forecast, color='red', label='Forecast')
+    plt.xlabel('Time')
+    plt.ylabel('EVSales')
+    plt.legend()
+    plt.show()
+
+
+def main():
+    file_path = 'ev-sales.csv'
+    start_date = '2023-01-01'
+    end_date = '2050-01-01'
+    
+    data = load_data(file_path)
+    model_fit = train_arima_model(data)
+    forecast = generate_forecast(model_fit, start_date, end_date)
+    forecast_years = pd.date_range(start=start_date, end=end_date, freq='AS-JAN')
+    
+    plot_forecast(data, forecast_years, forecast)
+
+
+if __name__ == "__main__":
+    main()
